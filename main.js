@@ -292,32 +292,39 @@ const game = (function() {
 })();
 
 // Create player objects
-function createPlayer(symbol) {
+function createPlayer(symbol, name) {
   let moves = 0;
-  const playerProto = Object.create(null, {
-    getMoves: {
-      value: function() {
-        return moves;
-      }
-    },
-    updateMoves: {
-      value: function() {
-        return ++moves;
-      }
-    },
-    resetMoves: {
-      value: function() {
-        moves = 0;
-      }
-    },
-    getSymbol: {
-      value: function() {
-        return symbol;
-      }
-    },
-  });
 
-  return Object.create(playerProto);
+  function getMoves() {
+    return moves;
+  }
+
+  function updateMoves() {
+    moves += 1;
+    return moves;
+  }
+
+  function resetMoves() {
+    moves = 0;
+  }
+
+  function getSymbol() {
+    return symbol;
+  }
+
+  function getName() {
+    return name;
+  }
+
+  function setName(newName) {
+    if (newName.trim() !== '') {
+      name = newName;
+    }
+
+    return name;
+  }
+
+  return {getMoves, updateMoves, resetMoves, getSymbol, getName, setName};
 }
 
 // Initialization
