@@ -1,0 +1,44 @@
+*, *:before, *:after {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: sans-serif;
+}
+
+#board {
+  width: 85%;
+  margin: 0 auto;
+  display: flex;
+  flex-flow: column nowrap;
+}
+
+.row {
+  display: flex;
+  flex-flow: row nowrap;
+}
+
+.tile {
+  flex: 0 0 33%;
+  height: 150px;
+  padding-top: 20px;
+}
+
+.tile:hover {
+  cursor: pointer;
+}
+
+[data-symbol] {
+  background-color: red;
+  text-align: center;
+  font-size: 5em;
+  border: 1px solid #000;
+}
+
+[data-symbol='x'] {
+  background-color: green;
+}
+
+[data-symbol='o'] {
+  background-color: rebeccapurple;
+}
