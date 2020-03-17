@@ -1,65 +1,60 @@
 // Manage internal representation of board
 const board = (function() {
+  // Size of the board
+  // Total number of consecutive symbols that shows that a player is the winner
   const size = 3;
+
+  // Total number of symbols for each player used to check for a winner
+  let player1Total = 0;
+  let player2Total = 0;
+
   let representation = [
     ['', '', ''],
     ['', '', ''],
     ['', '', '']
   ];
 
-  function getRepresentation() {
-    return representation;
-  }
-
-  function checkBoundsValidity(row, col) {
+  // Check if a given pair of indices are out of bounds
+  function _checkBoundsValidity(row, col) {
     return (0 <= row && row < size) && (0 <= col && col < size);
   }
 
-  function getValueAt(row, col) {
-    if (checkBoundsValidity(row, col)) {
-      return representation[row][col];
-    }
-  }
-
-  function setValueAt(row, col, value) {
-    if (checkBoundsValidity(row, col) && representation[row][col] === '') {
-      representation[row][col] = value;
-      return true;
-    }
-
-    return false;
-  }
-
-  function updateCount(row, col, p1Count, p2Count) {
+  // Update the total number of symbols each player has on the board
+  function _updatePlayerTotals(row, col) {
     switch(representation[row][col]) {
-      case 'x': ++p1Count; break;
-      case 'o': ++p2Count; break;
+      case 'x': ++player1Total; break;
+      case 'o': ++player2Total; break;
     }
-
-    return [p1Count, p2Count];
   }
 
-  function getWinner(p1Count, p2Count) {
-    const countForWin = size;
-    if (p1Count === countForWin) {
+  // Reset the total number of symbols each player has on the board
+  function _resetPlayerTotals() {
+    player1Total = player2Total = 0;
+  } 
+
+  // Determine the winner symbol
+  // Return null is there is no winner
+  function _determineWinnerSymbol() {
+    if (player1Total === size) {
       return 'x';
-    } else if (p2Count === countForWin) {
+    } else if (player2Total === size) {
       return 'o';
     }
 
     return null;
   }
 
-  function checkHorizontals() {
+  // Check the horizontal sections of the board for a winner
+  // Return the symbol for winner if one is found, otherwise return null
+  function _checkHorizontalSections() {
     for (let col = 0; col < size; col++) {
-      let p1Count = 0;
-      let p2Count = 0;
+      player1Total = player2Total = 0;
 
       for (let row = 0; row < size; row++) {
-        [p1Count, p2Count] = updateCount(row, col, p1Count, p2Count);
+        _updatePlayerTotals(row, col);
       }
 
-      const winner = getWinner(p1Count, p2Count);
+      const winner = _determineWinnerSymbol();
       if (winner) {
         return winner;
       }
@@ -68,16 +63,16 @@ const board = (function() {
     return null;
   }
 
-  function checkVerticals() {
+  // Check the vertical sections of the board for a winner
+  // Return the symbol for winner if one is found, otherwise return null
+  function _checkVerticalSections() {
     for (let row = 0; row < size; row++) {
-      let p1Count = 0;
-      let p2Count = 0;
-
+      _resetPlayerTotals();
       for (let col = 0; col < size; col++) {
-        [p1Count, p2Count] = updateCount(row, col, p1Count, p2Count);
+        _updatePlayerTotals(row, col);
       }
 
-      const winner = getWinner(p1Count, p2Count);
+      const winner = _determineWinnerSymbol();
       if (winner) {
         return winner;
       }
@@ -86,79 +81,103 @@ const board = (function() {
     return null;
   }
 
-  function checkDiagonals() {
-    let winner;
-    let p1Count = 0;
-    let p2Count = 0;
+  // Check the diagonal sections of the board for a winner
+  // Return the symbol for the winner if one is found, otherwise return null
+  function _checkDiagonalSections() {
+    let winnerSymbol, player1Total, player2Total;
 
-    // Check left-diagonal
+    // Check top-left diagonal
+    _resetPlayerTotals();
     for (let row = 0, col = 0; row < size; row++, col++) {
-      [p1Count, p2Count] = updateCount(row, col, p1Count, p2Count);
+      _updatePlayerTotals(row, col);
     }
 
-    winner = getWinner(p1Count, p2Count);
-    if (winner) {
-      return winner;
+    winnerSymbol = _determineWinnerSymbol();
+    if (winnerSymbol) {
+      return winnerSymbol;
     }
 
-    // Reset symbol count for both players before final check
-    p1Count = p2Count = 0;
-
-    // Check right-diagonal
+    // Check top-right diagonal
+    _resetPlayerTotals();
     for (let row = 0, col = size - 1; row < size; row++, col--) {
-      [p1Count, p2Count] = updateCount(row, col, p1Count, p2Count);
+      _updatePlayerTotals(row, col);
     }
 
-    return getWinner(p1Count, p2Count);
+    return _determineWinnerSymbol();
   }
 
-  function checkStatus() {
-    let status = '';
-    status = checkHorizontals();
-    if (status !== null) {
-      return status;
-    }
+  // Return the board array
+  function getRepresentation() {
+    return representation;
+  }
 
-    status = checkVerticals();
-    if (status !== null) {
-      return status;
-    }
-
-    status = checkDiagonals();
-    if (status !== null) {
-      return status;
+  // Return the value of a given tile
+  // Return undefined if given board tile is invalid
+  function getValueAt(row, col) {
+    if (_checkBoundsValidity(row, col)) {
+      return representation[row][col];
     }
   }
 
-  // Set all tiles of the board to empty string
+  // Set the value for a given tile to a given player symbol
+  // Return true if tile location is valid, false otherwise
+  function setValueAt(row, col, playerObject) {
+    if (getValueAt(row, col) === '') {
+      representation[row][col] = playerObject.getSymbol();
+      return true;
+    }
+
+    return false;
+  }
+
+  // Return the symbol for the player who wins the game
+  // Return null if there is not winner
+  function getWinnerSymbol() {
+    let status = _checkHorizontalSections();
+    if (status) {
+      return status;
+    }
+
+    status = _checkVerticalSections();
+    if (status) {
+      return status;
+    }
+
+    return _checkDiagonalSections();
+  }
+
+  // Removes all player symbols from the board
+  // Sets all tiles to empty string
   function clear() {
     representation.forEach((rowValue, rowIndex) => {
       rowValue.forEach((colValue, colIndex) => {
-        representation[rowValue][colIndex] = '';
+        representation[rowIndex][colIndex] = '';
       });
     });
   }
 
-  return {getRepresentation, getValueAt, setValueAt, checkStatus, clear};
+  return {getRepresentation, getValueAt, setValueAt, getWinnerSymbol, clear};
 })();
 
 // Control DOM manipulation
-const display = (function(boardElement, boardRepresentation) {
+const display = (function(boardElement, boardObject) {
 
   // Remove the current board and create a new one
-  function createNewBoardElement() {
+  function _createNewBoardElement() {
     boardElement.parentElement.removeChild(boardElement);
     const newBoard = document.createElement('div');
     newBoard.id = 'board';
     return newBoard;
   }
 
-  function getTileIndex(tileElement) {
+  // Return the row and column values for a given tile element
+  function _getTileIndex(tileElement) {
     return [tileElement.dataset.row, tileElement.dataset.col];
   }
 
-  function handleTileElementClick(e) {
-    let [row, col] = getTileIndex(e.target);
+  // Event handler for tile element click
+  function _handleTileElementClick(e) {
+    let [row, col] = _getTileIndex(e.target);
     game.placeSymbolForCurrentPlayer(row, col);
     renderBoard();
   }
@@ -166,9 +185,9 @@ const display = (function(boardElement, boardRepresentation) {
   // Render contents of board representation to screen
   function renderBoard() {
     // Recreate all DOM elements with updated values
-    boardElement = createNewBoardElement();
+    boardElement = _createNewBoardElement();
 
-    boardRepresentation.forEach((rowValue, rowIndex) => {
+    boardObject.getRepresentation().forEach((rowValue, rowIndex) => {
       const rowElement = document.createElement('div');
       rowElement.classList.add('row');
 
@@ -179,7 +198,7 @@ const display = (function(boardElement, boardRepresentation) {
         tileElement.dataset.col = colIndex;
         tileElement.dataset.symbol = colValue;
         tileElement.textContent = colValue;
-        tileElement.addEventListener('click', handleTileElementClick);
+        tileElement.addEventListener('click', _handleTileElementClick);
         rowElement.appendChild(tileElement);
       });
 
@@ -190,16 +209,24 @@ const display = (function(boardElement, boardRepresentation) {
   }
 
   return {renderBoard};
-})(document.getElementById('board'), board.getRepresentation());
+})(document.getElementById('board'), board);
 
 // Manage game state
 const game = (function() {
+  const movesForDraw = 9;
+  const movesForWin = 3;
   const arrayOfPlayers = [createPlayer('x'), createPlayer('o')];
-  let gameIsOn = false;
   let currentPlayerIndex = 0;
   let currentPlayer = arrayOfPlayers[currentPlayerIndex];
+  let gameIsRunning = false;
 
-  function updateCurrentPlayer() {
+  // Calculate the total number of moves made by both players
+  function _calculateTotalMoves() {
+    return arrayOfPlayers.reduce((acc, cur) => acc + cur.getMoves(), 0);
+  }
+
+  // Change the current player to the next player
+  function _toggleCurrentPlayer() {
     if (currentPlayerIndex === 1) {
       currentPlayerIndex = 0;
     } else {
@@ -208,54 +235,60 @@ const game = (function() {
 
     return arrayOfPlayers[currentPlayerIndex];
   }
-
-  function getCurrentPlayer() {
-    return currentPlayer;
-  }
-
-  function placeSymbolForCurrentPlayer(row, col) {
-    const moveIsValid = board.setValueAt(row, col, currentPlayer.getSymbol());
-    if (moveIsValid) {
-      currentPlayer.updateMoves();
-      if (currentPlayer.getMoves() >= 3) {
-        const boardStatus = board.checkStatus();
-        if (boardStatus === currentPlayer.getSymbol()) {
-          declareWinner(currentPlayer);
-        } else if (boardStatus === 'draw') {
-          declareDraw();
-        }
-      }
-
-      currentPlayer = updateCurrentPlayer();
-    }
-  }
   
-  function reset() {
+  // Reset the board and display
+  function _reset() {
+    gameIsRunning = true;
     board.clear();
     display.renderBoard();
+    arrayOfPlayers.forEach((player) => player.resetMoves());
   }
 
-  function declareWinner(winner) {
-    console.log(winner.getSymbol(), 'wins');
+  // Declare the current player winner and stop the game
+  function _declareWinner() {
+    console.log(currentPlayer.getSymbol(), 'wins');
     // display.renderWinnerMessage(winner);
-    gameIsOn = false;
+    gameIsRunning = false;
+    _reset();
   }
 
-  function declareDraw() {
-    display.renderDrawMessage();
-    gameIsOn = false;
+  // Declare a draw and stop the game
+  function _declareDraw() {
+    console.log('draw');
+    // display.renderDrawMessage();
+    gameIsRunning = false;
+    _reset();
   }
 
+  // Place a symbol on the board for the current player and check for a winner
+  function placeSymbolForCurrentPlayer(row, col) {
+    if (gameIsRunning) {
+      const placementIsValid = board.setValueAt(row, col, currentPlayer);
+      if (placementIsValid) {
+        if (currentPlayer.updateMoves() >= movesForWin) {
+          if (board.getWinnerSymbol() === currentPlayer.getSymbol()) {
+            _declareWinner();
+          } else if (_calculateTotalMoves() === movesForDraw) {
+            _declareDraw();
+          }
+        }
+
+        currentPlayer = _toggleCurrentPlayer();
+      }
+    }
+  }
+
+  // Main entry point
   function play() {
-    if (!gameIsOn) {
-      gameIsOn = true;
+    if (!gameIsRunning) {
+      gameIsRunning = true;
       display.renderBoard();
     } else {
       console.log('game is currently ongoing');
     }
   }
 
-  return {play, placeSymbolForCurrentPlayer};
+  return {placeSymbolForCurrentPlayer, play};
 })();
 
 // Create player objects
@@ -270,6 +303,11 @@ function createPlayer(symbol) {
     updateMoves: {
       value: function() {
         return ++moves;
+      }
+    },
+    resetMoves: {
+      value: function() {
+        moves = 0;
       }
     },
     getSymbol: {
