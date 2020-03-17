@@ -161,6 +161,35 @@ const board = (function() {
 
 // Control DOM manipulation
 const display = (function(boardElement, boardObject) {
+  const formDisplayToggleBtn = document.querySelector('.name-form-display');
+  const form = document.querySelector('form');
+  const inputFields = [...form.children].filter((f) => f.nodeName === 'INPUT');
+
+  // Event listeners
+  formDisplayToggleBtn.addEventListener('click', _toggleFormDisplay);
+  form.addEventListener('submit', _handleFormSubmission);
+
+  function _toggleFormDisplay(e) {
+    const formOpacity = form.style.opacity;
+    if (formOpacity === '0') {
+      formDisplayToggleBtn.textContent = 'Close'
+      form.style.opacity = '1';
+    } else {
+      formDisplayToggleBtn.textContent = 'Update Player Names';
+      form.style.opacity = '0';
+      inputFields.forEach((f) => f.value = '');
+    }
+  }
+
+  function _handleFormSubmission(e) {
+    e.preventDefault();
+    game.updateNames(_retrieveNames());
+    _toggleFormDisplay();
+  }
+
+  function _retrieveNames() {
+    return inputFields.map((f) => f.value);
+  }
 
   // Remove the current board and create a new one
   function _createNewBoardElement() {
@@ -215,7 +244,10 @@ const display = (function(boardElement, boardObject) {
 const game = (function() {
   const movesForDraw = 9;
   const movesForWin = 3;
-  const arrayOfPlayers = [createPlayer('x'), createPlayer('o')];
+  const arrayOfPlayers = [
+    createPlayer('x', 'Player 1'),
+    createPlayer('o', 'Player 2')
+  ];
   let currentPlayerIndex = 0;
   let currentPlayer = arrayOfPlayers[currentPlayerIndex];
   let gameIsRunning = false;
@@ -246,7 +278,7 @@ const game = (function() {
 
   // Declare the current player winner and stop the game
   function _declareWinner() {
-    console.log(currentPlayer.getSymbol(), 'wins');
+    console.log(currentPlayer.getName(), 'wins');
     // display.renderWinnerMessage(winner);
     gameIsRunning = false;
     _reset();
@@ -258,6 +290,10 @@ const game = (function() {
     // display.renderDrawMessage();
     gameIsRunning = false;
     _reset();
+  }
+
+  function updateNames(names) {
+    names.forEach((name, index) => arrayOfPlayers[index].setName(name));
   }
 
   // Place a symbol on the board for the current player and check for a winner
@@ -288,7 +324,7 @@ const game = (function() {
     }
   }
 
-  return {placeSymbolForCurrentPlayer, play};
+  return {updateNames, placeSymbolForCurrentPlayer, play};
 })();
 
 // Create player objects
