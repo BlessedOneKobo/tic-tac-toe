@@ -1,5 +1,5 @@
 // Manage internal representation of board
-const board = (function() {
+const gameBoard = (function() {
   // Size of the board
   // Total number of consecutive symbols that shows that a player is the winner
   const size = 3;
@@ -160,33 +160,71 @@ const board = (function() {
 })();
 
 // Control DOM manipulation
-const display = (function(boardElement, boardObject) {
+const displayController = (function(boardElement, gameBoardObject) {
+  // Constants for opacity setting
+  const visible = '1';
+  const notVisible = '0';
+
+  // Initialization of page elements
   const formDisplayToggleBtn = document.querySelector('.name-form-display');
   const form = document.querySelector('form');
   const inputFields = [...form.children].filter((f) => f.nodeName === 'INPUT');
+  const startBtn = document.querySelector('.start-reset-btn');
+
+  // Defaults
+  form.style.opacity = visible;
+  boardElement.style.opacity = notVisible;
 
   // Event listeners
   formDisplayToggleBtn.addEventListener('click', _toggleFormDisplay);
+  startBtn.addEventListener('click', _handleStartBtnClick);
   form.addEventListener('submit', _handleFormSubmission);
 
   function _toggleFormDisplay(e) {
-    const formOpacity = form.style.opacity;
-    if (formOpacity === '0') {
-      formDisplayToggleBtn.textContent = 'Close'
-      form.style.opacity = '1';
+    if (form.style.opacity === visible) {
+      _hideForm();
     } else {
-      formDisplayToggleBtn.textContent = 'Update Player Names';
-      form.style.opacity = '0';
-      inputFields.forEach((f) => f.value = '');
+      _showForm();
     }
   }
 
+  function _handleStartBtnClick(e) {
+    if (game.isRunning()) {
+      // Passing true to the play method restarts the game
+      game.play(true);
+    } else {
+      game.play();
+      boardElement.style.opacity = visible;
+      e.target.textContent = 'Reset';
+    }
+
+    if (form.style.opacity === visible) {
+      game.updateNames(_retrieveNames());
+      _hideForm();
+    }
+  }
+
+  // Handle name change
   function _handleFormSubmission(e) {
     e.preventDefault();
     game.updateNames(_retrieveNames());
-    _toggleFormDisplay();
+    _hideForm();
   }
 
+  // Make the form visible on the screen
+  function _showForm() {
+    formDisplayToggleBtn.textContent = 'Close'
+    form.style.opacity = visible;
+  }
+
+  // Clear the input fields and hide the form
+  function _hideForm() {
+    formDisplayToggleBtn.textContent = 'Update Player Names';
+    form.style.opacity = notVisible;
+    inputFields.forEach((f) => f.value = '');
+  }
+
+  // Return an array with the values of the player name input fields
   function _retrieveNames() {
     return inputFields.map((f) => f.value);
   }
@@ -216,7 +254,7 @@ const display = (function(boardElement, boardObject) {
     // Recreate all DOM elements with updated values
     boardElement = _createNewBoardElement();
 
-    boardObject.getRepresentation().forEach((rowValue, rowIndex) => {
+    gameBoardObject.getRepresentation().forEach((rowValue, rowIndex) => {
       const rowElement = document.createElement('div');
       rowElement.classList.add('row');
 
@@ -232,13 +270,14 @@ const display = (function(boardElement, boardObject) {
       });
 
       boardElement.appendChild(rowElement);
+      boardElement.style.opacity = game.isRunning() ? visible : notVisible;
     });
 
     document.body.appendChild(boardElement);
   }
 
   return {renderBoard};
-})(document.getElementById('board'), board);
+})(document.getElementById('board'), gameBoard);
 
 // Manage game state
 const game = (function() {
@@ -271,15 +310,15 @@ const game = (function() {
   // Reset the board and display
   function _reset() {
     gameIsRunning = true;
-    board.clear();
-    display.renderBoard();
+    gameBoard.clear();
+    displayController.renderBoard();
     arrayOfPlayers.forEach((player) => player.resetMoves());
   }
 
   // Declare the current player winner and stop the game
   function _declareWinner() {
     console.log(currentPlayer.getName(), 'wins');
-    // display.renderWinnerMessage(winner);
+    // displayController.renderWinnerMessage(winner);
     gameIsRunning = false;
     _reset();
   }
@@ -287,7 +326,7 @@ const game = (function() {
   // Declare a draw and stop the game
   function _declareDraw() {
     console.log('draw');
-    // display.renderDrawMessage();
+    // displayController.renderDrawMessage();
     gameIsRunning = false;
     _reset();
   }
@@ -299,10 +338,10 @@ const game = (function() {
   // Place a symbol on the board for the current player and check for a winner
   function placeSymbolForCurrentPlayer(row, col) {
     if (gameIsRunning) {
-      const placementIsValid = board.setValueAt(row, col, currentPlayer);
+      const placementIsValid = gameBoard.setValueAt(row, col, currentPlayer);
       if (placementIsValid) {
         if (currentPlayer.updateMoves() >= movesForWin) {
-          if (board.getWinnerSymbol() === currentPlayer.getSymbol()) {
+          if (gameBoard.getWinnerSymbol() === currentPlayer.getSymbol()) {
             _declareWinner();
           } else if (_calculateTotalMoves() === movesForDraw) {
             _declareDraw();
@@ -314,17 +353,21 @@ const game = (function() {
     }
   }
 
+  function isRunning() {
+    return gameIsRunning;
+  }
+
   // Main entry point
-  function play() {
+  function play(restart = false) {
     if (!gameIsRunning) {
       gameIsRunning = true;
-      display.renderBoard();
-    } else {
-      console.log('game is currently ongoing');
+      displayController.renderBoard();
+    } else if (restart) {
+      _reset();
     }
   }
 
-  return {updateNames, placeSymbolForCurrentPlayer, play};
+  return {updateNames, placeSymbolForCurrentPlayer, play, isRunning};
 })();
 
 // Create player objects
@@ -362,6 +405,3 @@ function createPlayer(symbol, name) {
 
   return {getMoves, updateMoves, resetMoves, getSymbol, getName, setName};
 }
-
-// Initialization
-game.play();
