@@ -217,12 +217,12 @@ const displayController = (function(boardElement, gameBoardObject) {
     game.play();
   }
 
+  // Update display for game start
   function _changeToGameStartDisplay() {
     _showElement(boardElement);
     _hideElement(headingElement);
     startBtn.textContent = 'Reset';
-    startBtn.classList.add('reset');
-    startBtn.classList.remove('start');
+    _swapElementClass(startBtn, 'start', 'reset');
   }
 
   // Make the form visible on the screen
@@ -240,11 +240,13 @@ const displayController = (function(boardElement, gameBoardObject) {
     inputFields.forEach((f) => f.value = '');
   }
 
+  // Replace class in @before with @after
   function _swapElementClass(elem, before, after) {
     elem.classList.remove(before);
     elem.classList.add(after);
   }
 
+  // Display and element
   function _showElement(elem, value) {
     elem.classList.remove('hidden');
     if (value) {
@@ -252,6 +254,7 @@ const displayController = (function(boardElement, gameBoardObject) {
     }
   }
 
+  // Hide an element
   function _hideElement(elem) {
     elem.classList.add('hidden');
   }
