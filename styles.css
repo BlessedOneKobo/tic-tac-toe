@@ -1,3 +1,52 @@
+/* http://meyerweb.com/eric/tools/css/reset/ 
+   v2.0 | 20110126
+   License: none (public domain)
+*/
+
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed, 
+figure, figcaption, footer, header, hgroup, 
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 100%;
+  font: inherit;
+  vertical-align: baseline;
+}
+/* HTML5 display-role reset for older browsers */
+article, aside, details, figcaption, figure, 
+footer, header, hgroup, menu, nav, section {
+  display: block;
+}
+body {
+  line-height: 1;
+}
+ol, ul {
+  list-style: none;
+}
+blockquote, q {
+  quotes: none;
+}
+blockquote:before, blockquote:after,
+q:before, q:after {
+  content: '';
+  content: none;
+}
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
 /* General */
 *, *:before, *:after {
   box-sizing: border-box;
@@ -23,7 +72,7 @@ button, input {
 }
 
 input {
-  padding: .3em .175em;
+  padding: .2em .4em;
   width: 100%;
   margin-bottom: .25em;
 }
@@ -111,11 +160,12 @@ form {
 }
 .tile {
   flex: 0 0 33.33%;
-  height: 150px;
-  padding-top: 20px;
+  padding-top: .35em;
+  padding-bottom: .35em;
   background-color: #ddd;
   text-align: center;
   font-size: 5em;
+  font-weight: bold;
   border-right: 1px solid #555;
   border-bottom: 1px solid #555;
 }
@@ -125,11 +175,11 @@ form {
 .row:last-child > .tile {
   border-bottom: none;
 }
-[data-symbol='x'] {
+[data-symbol='X'] {
   background-color: #3498e6;
   color: #fff;
 }
-[data-symbol='o'] {
+[data-symbol='O'] {
   background-color: #ff4545;
   color: #000;
 }
@@ -143,10 +193,8 @@ form {
   }
   .tile {
     font-size: 3.33em;
-    height: 100px;
-    padding-top: 13.33px;
   }
-  .message {
-    font-size: 1.33em;
+  h1, .message {
+    font-size: 1.85em;
   }
 }

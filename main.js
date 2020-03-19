@@ -1,70 +1,57 @@
-// Manage internal representation of board
+// Board Module
 const gameBoard = (function() {
-  // Size of the board
-  // Total number of consecutive symbols that shows that a player is the winner
+  const EMPTY = '#';
   const size = 3;
 
-  // Total number of symbols for each player used to check for a winner
+  // Total number of symbols for each player in each section
   let player1Total = 0;
   let player2Total = 0;
 
   let representation = [
-    ['', '', ''],
-    ['', '', ''],
-    ['', '', '']
+    [EMPTY, EMPTY, EMPTY],
+    [EMPTY, EMPTY, EMPTY],
+    [EMPTY, EMPTY, EMPTY]
   ];
 
-  // Check if a given pair of indices are out of bounds
   function _checkBoundsValidity(row, col) {
     return (0 <= row && row < size) && (0 <= col && col < size);
   }
 
-  // Update the total number of symbols each player has on the board
   function _updatePlayerTotals(row, col) {
     switch(representation[row][col]) {
-      case 'x': ++player1Total; break;
-      case 'o': ++player2Total; break;
+      case 'X': ++player1Total; break;
+      case 'O': ++player2Total; break;
     }
   }
 
-  // Reset the total number of symbols each player has on the board
   function _resetPlayerTotals() {
     player1Total = player2Total = 0;
   } 
 
-  // Determine the winner symbol
-  // Return null is there is no winner
   function _determineWinnerSymbol() {
     if (player1Total === size) {
-      return 'x';
+      return 'X';
     } else if (player2Total === size) {
-      return 'o';
+      return 'O';
     }
 
     return null;
   }
 
-  // Check the horizontal sections of the board for a winner
-  // Return the symbol for winner if one is found, otherwise return null
   function _checkHorizontalSections() {
     for (let col = 0; col < size; col++) {
-      player1Total = player2Total = 0;
-
+      _resetPlayerTotals();
       for (let row = 0; row < size; row++) {
         _updatePlayerTotals(row, col);
       }
 
       const winner = _determineWinnerSymbol();
-      if (winner) {
-        return winner;
-      }
+      if (winner) return winner;
     }
 
     return null;
   }
 
-  // Check the vertical sections of the board for a winner
-  // Return the symbol for winner if one is found, otherwise return null
   function _checkVerticalSections() {
     for (let row = 0; row < size; row++) {
       _resetPlayerTotals();
@@ -73,16 +60,12 @@ const gameBoard = (function() {
       }
 
       const winner = _determineWinnerSymbol();
-      if (winner) {
-        return winner;
-      }
+      if (winner) return winner;
     }
 
     return null;
   }
 
-  // Check the diagonal sections of the board for a winner
-  // Return the symbol for the winner if one is found, otherwise return null
   function _checkDiagonalSections() {
     let winnerSymbol, player1Total, player2Total;
 
@@ -93,9 +76,7 @@ const gameBoard = (function() {
     }
 
     winnerSymbol = _determineWinnerSymbol();
-    if (winnerSymbol) {
-      return winnerSymbol;
-    }
+    if (winnerSymbol) return winnerSymbol;
 
     // Check top-right diagonal
     _resetPlayerTotals();
@@ -106,23 +87,16 @@ const gameBoard = (function() {
     return _determineWinnerSymbol();
   }
 
-  // Return the board array
   function getRepresentation() {
     return representation;
   }
 
-  // Return the value of a given tile
-  // Return undefined if given board tile is invalid
   function getValueAt(row, col) {
-    if (_checkBoundsValidity(row, col)) {
-      return representation[row][col];
-    }
+    if (_checkBoundsValidity(row, col)) return representation[row][col];
   }
 
-  // Set the value for a given tile to a given player symbol
-  // Return true if tile location is valid, false otherwise
   function setValueAt(row, col, playerObject) {
-    if (getValueAt(row, col) === '') {
+    if (getValueAt(row, col) === EMPTY) {
       representation[row][col] = playerObject.getSymbol();
       return true;
     }
@@ -130,38 +104,33 @@ const gameBoard = (function() {
     return false;
   }
 
-  // Return the symbol for the player who wins the game
-  // Return null if there is not winner
   function getWinnerSymbol() {
     let status = _checkHorizontalSections();
-    if (status) {
-      return status;
-    }
+    if (status) return status;
 
     status = _checkVerticalSections();
-    if (status) {
-      return status;
-    }
+    if (status) return status;
 
     return _checkDiagonalSections();
   }
 
-  // Removes all player symbols from the board
-  // Sets all tiles to empty string
   function clear() {
     representation.forEach((rowValue, rowIndex) => {
       rowValue.forEach((colValue, colIndex) => {
-        representation[rowIndex][colIndex] = '';
+        representation[rowIndex][colIndex] = EMPTY;
       });
     });
   }
 
-  return {getRepresentation, getValueAt, setValueAt, getWinnerSymbol, clear};
+  return {
+    getRepresentation, getValueAt, setValueAt, getWinnerSymbol, clear, EMPTY
+  };
 })();
 
-// Control DOM manipulation
+
+// Display Module
 const displayController = (function(boardElement, gameBoardObject) {
-  // Initialization of page elements
+  // Page elements
   const containerElement = document.querySelector('.container');
   const headingElement = document.querySelector('h1');
   const formDisplayToggleBtn = document.querySelector('.name-form-display');
@@ -175,7 +144,6 @@ const displayController = (function(boardElement, gameBoardObject) {
   startBtn.addEventListener('click', _handleStartBtnClick);
   form.addEventListener('submit', _handleFormSubmission);
 
-  // Hide/display form
   function _toggleFormDisplay() {
     if (_checkIfFormIsHidden()) {
       _showForm();
@@ -184,12 +152,10 @@ const displayController = (function(boardElement, gameBoardObject) {
     }
   }
 
-  // Return true if a form is visible
   function _checkIfFormIsHidden() {
     return [...form.classList].includes('hidden');
   }
 
-  // Handle game start or restart
   function _handleStartBtnClick() {
     _hideElement(messageElement);
     if (startBtn.textContent === 'Reset') {
@@ -205,19 +171,14 @@ const displayController = (function(boardElement, gameBoardObject) {
     }
   }
 
-  // Handle name change
   function _handleFormSubmission(e) {
     e.preventDefault();
     game.updateNames(_retrieveNames());
     _hideForm();
-    if (!game.isRunning()) {
-      _changeToGameStartDisplay();
-    }
-  
+    if (!game.isRunning()) _changeToGameStartDisplay();
     game.play();
   }
 
-  // Update display for game start
   function _changeToGameStartDisplay() {
     _showElement(boardElement);
     _hideElement(headingElement);
@@ -225,58 +186,53 @@ const displayController = (function(boardElement, gameBoardObject) {
     _swapElementClass(startBtn, 'start', 'reset');
   }
 
-  // Make the form visible on the screen
+  function _setDataAttribs(elem, obj) {
+    Object.keys(obj).forEach((key) => elem.dataset[key] = obj[key]);
+  }
+
   function _showForm() {
     formDisplayToggleBtn.textContent = 'Close'
     _swapElementClass(formDisplayToggleBtn, 'update-names', 'close');
     _showElement(form);
   }
 
-  // Clear the input fields and hide the form
   function _hideForm() {
+    // Clear input fields
+    inputFields.forEach((f) => f.value = '');
     formDisplayToggleBtn.textContent = 'Update Player Names';
     _swapElementClass(formDisplayToggleBtn, 'close', 'update-names');
     _hideElement(form);
-    inputFields.forEach((f) => f.value = '');
   }
 
-  // Replace class in @before with @after
   function _swapElementClass(elem, before, after) {
     elem.classList.remove(before);
     elem.classList.add(after);
   }
 
-  // Display and element
   function _showElement(elem, value) {
     elem.classList.remove('hidden');
-    if (value) {
-      elem.style.display = value;
-    }
+    if (value) elem.style.display = value;
   }
 
-  // Hide an element
   function _hideElement(elem) {
     elem.classList.add('hidden');
   }
 
-  // Return an array with the values of the player name input fields
   function _retrieveNames() {
     return inputFields.map((f) => f.value);
   }
 
-  // Remove the current board and create a new one
   function _resetBoardElement() {
-    boardElement.parentElement.removeChild(boardElement);
+    containerElement.removeChild(boardElement);
     boardElement = document.createElement('div');
     boardElement.id = 'board';
+    boardElement.classList.add('display-row');
   }
 
-  // Return the row and column values for a given tile element
   function _getTileIndex(tileElement) {
-    return [tileElement.dataset.row, tileElement.dataset.col];
+    return [tileElement.dataset.rowIndex, tileElement.dataset.colIndex];
   }
 
-  // Event handler for tile element click
   function _handleTileElementClick(e) {
     if (game.isRunning()) {
       _hideElement(messageElement);
@@ -287,21 +243,17 @@ const displayController = (function(boardElement, gameBoardObject) {
     renderBoard();
   }
 
-  // Render contents of board representation to screen
   function renderBoard() {
     // Recreate all DOM elements with updated values
     _resetBoardElement();
-
     gameBoardObject.getRepresentation().forEach((rowValue, rowIndex) => {
       const rowElement = document.createElement('div');
       rowElement.classList.add('row');
-
       rowValue.forEach((colValue, colIndex) => {
-        const tileElement = document.createElement('div');
+        const tileElement = document.createElement('span');
+        if (colValue === gameBoardObject.EMPTY) tileElement.style.color = 'transparent';
         tileElement.classList.add('tile');
-        tileElement.dataset.row = rowIndex;
-        tileElement.dataset.col = colIndex;
-        tileElement.dataset.symbol = colValue;
+        _setDataAttribs(tileElement, {rowIndex, colIndex, 'symbol': colValue});
         tileElement.textContent = colValue;
         tileElement.addEventListener('click', _handleTileElementClick);
         rowElement.appendChild(tileElement);
@@ -313,13 +265,11 @@ const displayController = (function(boardElement, gameBoardObject) {
     containerElement.appendChild(boardElement);
   }
 
-  // Display message for the winner
   function renderWinnerMessage(winnerName) {
     messageElement.textContent = winnerName + ' wins';
     _showElement(messageElement);
   }
 
-  // Display message for draw
   function renderDrawMessage() {
     messageElement.textContent = 'It\'s a draw';
     _showElement(messageElement);
@@ -328,65 +278,51 @@ const displayController = (function(boardElement, gameBoardObject) {
   return {renderBoard, renderWinnerMessage, renderDrawMessage};
 })(document.getElementById('board'), gameBoard);
 
-// Manage game state
+
+// Game State Module
 const game = (function() {
   const movesForDraw = 9;
   const movesForWin = 3;
-  const arrayOfPlayers = [
-    createPlayer('x', 'Player 1'),
-    createPlayer('o', 'Player 2')
-  ];
+  const players = [createPlayer('X'), createPlayer('O')];
   let currentPlayerIndex = 0;
-  let currentPlayer = arrayOfPlayers[currentPlayerIndex];
+  let currentPlayer = players[currentPlayerIndex];
   let gameIsRunning = false;
 
-  // Calculate the total number of moves made by both players
   function _calculateTotalMoves() {
-    return arrayOfPlayers.reduce((acc, cur) => acc + cur.getMoves(), 0);
+    return players.reduce((acc, cur) => acc + cur.getMoves(), 0);
   }
 
-  // Change the current player to the next player
   function _updateCurrentPlayer() {
-    if (currentPlayerIndex === 1) {
-      currentPlayerIndex = 0;
-    } else {
-      currentPlayerIndex = 1;
-    }
-
-    currentPlayer = arrayOfPlayers[currentPlayerIndex];
+    currentPlayerIndex = (currentPlayerIndex + 1) % 2;
+    currentPlayer = players[currentPlayerIndex];
   }
 
   function _resetCurrentPlayer() {
     currentPlayerIndex = 0;
-    currentPlayer = arrayOfPlayers[currentPlayerIndex];
+    currentPlayer = players[currentPlayerIndex];
   }
   
-  // Reset the board and display
   function _reset() {
     gameIsRunning = true;
     gameBoard.clear();
     _resetCurrentPlayer();
-    arrayOfPlayers.forEach((player) => player.resetMoves());
+    players.forEach((player) => player.resetMoves());
   }
 
-  // Declare the current player winner and stop the game
   function _declareWinner() {
     displayController.renderWinnerMessage(currentPlayer.getName());
     gameIsRunning = false;
   }
 
-  // Declare a draw and stop the game
   function _declareDraw() {
-    console.log('draw');
     displayController.renderDrawMessage();
     gameIsRunning = false;
   }
 
   function updateNames(names) {
-    names.forEach((name, index) => arrayOfPlayers[index].setName(name));
+    names.forEach((name, index) => players[index].setName(name));
   }
 
-  // Place a symbol on the board for the current player and check for a winner
   function placeSymbolForCurrentPlayer(row, col) {
     if (gameIsRunning) {
       const placementIsValid = gameBoard.setValueAt(row, col, currentPlayer);
@@ -408,16 +344,11 @@ const game = (function() {
     return gameIsRunning;
   }
 
-  // Main entry point
   function play() {
-    if (!gameIsRunning) {
-      gameIsRunning = true;
-    }
-
+    if (!gameIsRunning) gameIsRunning = true;
     displayController.renderBoard();
   }
 
-  // Restart the game
   function restart() {
     _reset();
     displayController.renderBoard();
@@ -426,7 +357,8 @@ const game = (function() {
   return {updateNames, placeSymbolForCurrentPlayer, play, restart, isRunning};
 })();
 
-// Create player objects
+
+// Player Factory
 function createPlayer(symbol, name) {
   let moves = 0;
 
@@ -448,14 +380,11 @@ function createPlayer(symbol, name) {
   }
 
   function getName() {
-    return name;
+    return name || symbol;
   }
 
   function setName(newName) {
-    if (newName.trim() !== '') {
-      name = newName;
-    }
-
+    if (newName.trim() !== '') name = newName;
     return name;
   }
 
