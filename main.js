@@ -170,16 +170,19 @@ const displayController = (function(boardElement, gameBoardObject) {
   const form = document.querySelector('form');
   const inputFields = [...form.children].filter((f) => f.nodeName === 'INPUT');
   const startBtn = document.querySelector('.start-reset-btn');
+  const messageElement = document.querySelector('.message');
 
   // Defaults
   form.style.opacity = visible;
   boardElement.style.opacity = notVisible;
+  messageElement.style.opacity = notVisible;
 
   // Event listeners
   formDisplayToggleBtn.addEventListener('click', _toggleFormDisplay);
   startBtn.addEventListener('click', _handleStartBtnClick);
   form.addEventListener('submit', _handleFormSubmission);
 
+  // Hide/display form
   function _toggleFormDisplay() {
     if (form.style.opacity === visible) {
       _hideForm();
@@ -188,10 +191,11 @@ const displayController = (function(boardElement, gameBoardObject) {
     }
   }
 
+  // Handle game start or restart
   function _handleStartBtnClick() {
-    if (game.isRunning()) {
-      // Passing true to the play method restarts the game
-      game.play(true);
+    messageElement.style.opacity = notVisible;
+    if (startBtn.textContent === 'Reset') {
+      game.restart();
     } else {
       game.play();
       _changeToGameStartDisplay();
@@ -253,8 +257,11 @@ const displayController = (function(boardElement, gameBoardObject) {
 
   // Event handler for tile element click
   function _handleTileElementClick(e) {
-    let [row, col] = _getTileIndex(e.target);
-    game.placeSymbolForCurrentPlayer(row, col);
+    if (game.isRunning()) {
+      let [row, col] = _getTileIndex(e.target);
+      game.placeSymbolForCurrentPlayer(row, col);
+    }
+
     renderBoard();
   }
 
@@ -279,13 +286,24 @@ const displayController = (function(boardElement, gameBoardObject) {
       });
 
       boardElement.appendChild(rowElement);
-      boardElement.style.opacity = game.isRunning() ? visible : notVisible;
     });
 
     document.body.appendChild(boardElement);
   }
 
-  return {renderBoard};
+  // Display message for the winner
+  function renderWinnerMessage(winnerName) {
+    messageElement.textContent = winnerName + ' wins';
+    messageElement.style.opacity = visible;
+  }
+
+  // Display message for draw
+  function renderDrawMessage() {
+    messageElement.textContent = 'It\'s a draw';
+    messageElement.style.opacity = visible;
+  }
+
+  return {renderBoard, renderWinnerMessage, renderDrawMessage};
 })(document.getElementById('board'), gameBoard);
 
 // Manage game state
@@ -320,24 +338,20 @@ const game = (function() {
   function _reset() {
     gameIsRunning = true;
     gameBoard.clear();
-    displayController.renderBoard();
     arrayOfPlayers.forEach((player) => player.resetMoves());
   }
 
   // Declare the current player winner and stop the game
   function _declareWinner() {
-    console.log(currentPlayer.getName(), 'wins');
-    // displayController.renderWinnerMessage(winner);
+    displayController.renderWinnerMessage(currentPlayer.getName());
     gameIsRunning = false;
-    _reset();
   }
 
   // Declare a draw and stop the game
   function _declareDraw() {
     console.log('draw');
-    // displayController.renderDrawMessage();
+    displayController.renderDrawMessage();
     gameIsRunning = false;
-    _reset();
   }
 
   function updateNames(names) {
@@ -367,16 +381,21 @@ const game = (function() {
   }
 
   // Main entry point
-  function play(restart = false) {
+  function play() {
     if (!gameIsRunning) {
       gameIsRunning = true;
-      displayController.renderBoard();
-    } else if (restart) {
-      _reset();
     }
+
+    displayController.renderBoard();
   }
 
-  return {updateNames, placeSymbolForCurrentPlayer, play, isRunning};
+  // Restart the game
+  function restart() {
+    _reset();
+    displayController.renderBoard();
+  }
+
+  return {updateNames, placeSymbolForCurrentPlayer, play, restart, isRunning};
 })();
 
 // Create player objects
