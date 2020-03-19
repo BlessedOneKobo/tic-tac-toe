@@ -161,21 +161,14 @@ const gameBoard = (function() {
 
 // Control DOM manipulation
 const displayController = (function(boardElement, gameBoardObject) {
-  // Constants for opacity setting
-  const visible = '1';
-  const notVisible = '0';
-
   // Initialization of page elements
+  const containerElement = document.querySelector('.container');
+  const headingElement = document.querySelector('h1');
   const formDisplayToggleBtn = document.querySelector('.name-form-display');
   const form = document.querySelector('form');
   const inputFields = [...form.children].filter((f) => f.nodeName === 'INPUT');
   const startBtn = document.querySelector('.start-reset-btn');
   const messageElement = document.querySelector('.message');
-
-  // Defaults
-  form.style.opacity = visible;
-  boardElement.style.opacity = notVisible;
-  messageElement.style.opacity = notVisible;
 
   // Event listeners
   formDisplayToggleBtn.addEventListener('click', _toggleFormDisplay);
@@ -184,16 +177,21 @@ const displayController = (function(boardElement, gameBoardObject) {
 
   // Hide/display form
   function _toggleFormDisplay() {
-    if (form.style.opacity === visible) {
-      _hideForm();
-    } else {
+    if (_checkIfFormIsHidden()) {
       _showForm();
+    } else {
+      _hideForm();
     }
+  }
+
+  // Return true if a form is visible
+  function _checkIfFormIsHidden() {
+    return [...form.classList].includes('hidden');
   }
 
   // Handle game start or restart
   function _handleStartBtnClick() {
-    messageElement.style.opacity = notVisible;
+    _hideElement(messageElement);
     if (startBtn.textContent === 'Reset') {
       game.restart();
     } else {
@@ -201,7 +199,7 @@ const displayController = (function(boardElement, gameBoardObject) {
       _changeToGameStartDisplay();
     }
 
-    if (form.style.opacity === visible) {
+    if (!_checkIfFormIsHidden()) {
       game.updateNames(_retrieveNames());
       _hideForm();
     }
@@ -220,21 +218,42 @@ const displayController = (function(boardElement, gameBoardObject) {
   }
 
   function _changeToGameStartDisplay() {
-    boardElement.style.opacity = visible;
+    _showElement(boardElement);
+    _hideElement(headingElement);
     startBtn.textContent = 'Reset';
+    startBtn.classList.add('reset');
+    startBtn.classList.remove('start');
   }
 
   // Make the form visible on the screen
   function _showForm() {
     formDisplayToggleBtn.textContent = 'Close'
-    form.style.opacity = visible;
+    _swapElementClass(formDisplayToggleBtn, 'update-names', 'close');
+    _showElement(form);
   }
 
   // Clear the input fields and hide the form
   function _hideForm() {
     formDisplayToggleBtn.textContent = 'Update Player Names';
-    form.style.opacity = notVisible;
+    _swapElementClass(formDisplayToggleBtn, 'close', 'update-names');
+    _hideElement(form);
     inputFields.forEach((f) => f.value = '');
+  }
+
+  function _swapElementClass(elem, before, after) {
+    elem.classList.remove(before);
+    elem.classList.add(after);
+  }
+
+  function _showElement(elem, value) {
+    elem.classList.remove('hidden');
+    if (value) {
+      elem.style.display = value;
+    }
+  }
+
+  function _hideElement(elem) {
+    elem.classList.add('hidden');
   }
 
   // Return an array with the values of the player name input fields
@@ -257,6 +276,7 @@ const displayController = (function(boardElement, gameBoardObject) {
   // Event handler for tile element click
   function _handleTileElementClick(e) {
     if (game.isRunning()) {
+      _hideElement(messageElement);
       let [row, col] = _getTileIndex(e.target);
       game.placeSymbolForCurrentPlayer(row, col);
     }
@@ -287,19 +307,19 @@ const displayController = (function(boardElement, gameBoardObject) {
       boardElement.appendChild(rowElement);
     });
 
-    document.body.appendChild(boardElement);
+    containerElement.appendChild(boardElement);
   }
 
   // Display message for the winner
   function renderWinnerMessage(winnerName) {
     messageElement.textContent = winnerName + ' wins';
-    messageElement.style.opacity = visible;
+    _showElement(messageElement);
   }
 
   // Display message for draw
   function renderDrawMessage() {
     messageElement.textContent = 'It\'s a draw';
-    messageElement.style.opacity = visible;
+    _showElement(messageElement);
   }
 
   return {renderBoard, renderWinnerMessage, renderDrawMessage};

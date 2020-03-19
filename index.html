@@ -7,15 +7,24 @@
   <link rel="stylesheet" type="text/css" href="styles.css">
 </head>
 <body>
-  <button class="name-form-display">Close</button>
-  <form>
-    <input type="text" name="player1" placeholder="Enter Player 1 Name">
-    <input type="text" name="player2" placeholder="Enter Player 2 Name">
-    <button type="submit">Submit</button>
-  </form>
-  <button class="start-reset-btn">Start</button>
-  <div class="message">No winner yet</div>
-  <div id="board"></div>
+  <div class="container">
+    <div class="display-row">
+      <h1>Tic-tac-toe Game</h1>
+    </div>
+    <div class="display-row">
+      <button class="close name-form-display">Close</button>
+    </div>
+    <form class="display-row">
+      <input type="text" name="player1" placeholder="Enter Player 1 Name">
+      <input type="text" name="player2" placeholder="Enter Player 2 Name">
+      <button type="submit">Submit</button>
+    </form>
+    <div class="display-row">
+      <button class="start start-reset-btn">Start</button>
+    </div>
+    <div class="display-row message hidden">No winner yet</div>
+    <div id="board" class="hidden"></div>
+  </div>
   <script src="main.js"></script>
 </body>
 </html>
