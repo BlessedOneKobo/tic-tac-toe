@@ -243,11 +243,10 @@ const displayController = (function(boardElement, gameBoardObject) {
   }
 
   // Remove the current board and create a new one
-  function _createNewBoardElement() {
+  function _resetBoardElement() {
     boardElement.parentElement.removeChild(boardElement);
-    const newBoard = document.createElement('div');
-    newBoard.id = 'board';
-    return newBoard;
+    boardElement = document.createElement('div');
+    boardElement.id = 'board';
   }
 
   // Return the row and column values for a given tile element
@@ -268,7 +267,7 @@ const displayController = (function(boardElement, gameBoardObject) {
   // Render contents of board representation to screen
   function renderBoard() {
     // Recreate all DOM elements with updated values
-    boardElement = _createNewBoardElement();
+    _resetBoardElement();
 
     gameBoardObject.getRepresentation().forEach((rowValue, rowIndex) => {
       const rowElement = document.createElement('div');
@@ -324,20 +323,26 @@ const game = (function() {
   }
 
   // Change the current player to the next player
-  function _toggleCurrentPlayer() {
+  function _updateCurrentPlayer() {
     if (currentPlayerIndex === 1) {
       currentPlayerIndex = 0;
     } else {
       currentPlayerIndex = 1;
     }
 
-    return arrayOfPlayers[currentPlayerIndex];
+    currentPlayer = arrayOfPlayers[currentPlayerIndex];
+  }
+
+  function _resetCurrentPlayer() {
+    currentPlayerIndex = 0;
+    currentPlayer = arrayOfPlayers[currentPlayerIndex];
   }
   
   // Reset the board and display
   function _reset() {
     gameIsRunning = true;
     gameBoard.clear();
+    _resetCurrentPlayer();
     arrayOfPlayers.forEach((player) => player.resetMoves());
   }
 
@@ -371,7 +376,7 @@ const game = (function() {
           }
         }
 
-        currentPlayer = _toggleCurrentPlayer();
+        _updateCurrentPlayer();
       }
     }
   }
