@@ -1,44 +1,152 @@
+/* General */
 *, *:before, *:after {
   box-sizing: border-box;
 }
 
 body {
   font-family: sans-serif;
+  background-color: #0f0515;
 }
 
-#board {
-  width: 85%;
+h1 {
+  text-align: center;
+  font-size: 3em;
+  margin: 0;
+  color: #fff;
+}
+
+button, input {
+  font-size: 1.25em;
+  display: block;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+input {
+  padding: .3em .175em;
+  width: 100%;
+  margin-bottom: .25em;
+}
+
+button {
+  padding: .3em .6em;
+  border: none;
+  background-color: #3498e6;
+  color: #fff;
+  box-shadow: 0px 2px 2px #555;
+  width: 11em;
+}
+button:hover, .tile:hover {
+  cursor: pointer;
+}
+button:active {
+  box-shadow: 1px 1px 2px #000 inset, -1px -1px 2px #000 inset;
+}
+button.name-form-display {
+}
+button.start-reset-btn {
+  display: block;
   margin: 0 auto;
-  display: flex;
-  flex-flow: column nowrap;
+}
+button.start {
+  background-color: #2d9d49;
+}
+button.start:hover {
+  background-color: #39bd5a;
+}
+button.reset, button.close {
+  background-color: #bb3b34
+}
+button.reset:hover, button.close:hover {
+  background-color: #dd4941;
+}
+button.update-names {
+  background-color: #bba634;
+}
+button.update-names:hover {
+  background-color: #d5bd3b;
+}
+[type="submit"] {
+  width: 100%;
 }
 
+.display-row {
+  margin-top: .5em;
+  margin-bottom: .5em;
+}
+
+.hidden {
+  display: none;
+}
+
+.container {
+  width: 70%;
+  margin: 0 auto;
+}
+
+/* Form */
+form {
+  padding: 1em;
+  background-color: #b7b3b3;
+}
+
+/* Message */
+.message {
+  font-size: 2em;
+  font-weight: bold;
+  text-align: center;
+  margin: 0;
+  line-height: 1.5;
+  color: #fff;
+}
+
+/* Board */
+#board {
+  flex-flow: column nowrap;
+  border: 1px solid #000;
+}
 .row {
   display: flex;
   flex-flow: row nowrap;
 }
-
 .tile {
-  flex: 0 0 33%;
+  flex: 0 0 33.33%;
   height: 150px;
   padding-top: 20px;
-}
-
-.tile:hover {
-  cursor: pointer;
-}
-
-[data-symbol] {
-  background-color: red;
+  background-color: #ddd;
   text-align: center;
   font-size: 5em;
-  border: 1px solid #000;
+  border-right: 1px solid #555;
+  border-bottom: 1px solid #555;
 }
-
+.row > .tile:last-child {
+  border-right: none;
+}
+.row:last-child > .tile {
+  border-bottom: none;
+}
 [data-symbol='x'] {
-  background-color: green;
+  background-color: #3498e6;
+  color: #fff;
+}
+[data-symbol='o'] {
+  background-color: #ff4545;
+  color: #000;
 }
 
-[data-symbol='o'] {
-  background-color: rebeccapurple;
+@media (max-width: 550px) {
+  button, input {
+    font-size: .95em;
+  }
+  .container {
+    width: 86.66%;
+  }
+  .tile {
+    font-size: 3.33em;
+    height: 100px;
+    padding-top: 13.33px;
+  }
+  .message {
+    font-size: 1.33em;
+  }
 }
