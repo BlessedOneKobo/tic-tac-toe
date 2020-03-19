@@ -180,7 +180,7 @@ const displayController = (function(boardElement, gameBoardObject) {
   startBtn.addEventListener('click', _handleStartBtnClick);
   form.addEventListener('submit', _handleFormSubmission);
 
-  function _toggleFormDisplay(e) {
+  function _toggleFormDisplay() {
     if (form.style.opacity === visible) {
       _hideForm();
     } else {
@@ -188,14 +188,13 @@ const displayController = (function(boardElement, gameBoardObject) {
     }
   }
 
-  function _handleStartBtnClick(e) {
+  function _handleStartBtnClick() {
     if (game.isRunning()) {
       // Passing true to the play method restarts the game
       game.play(true);
     } else {
       game.play();
-      boardElement.style.opacity = visible;
-      e.target.textContent = 'Reset';
+      _changeToGameStartDisplay();
     }
 
     if (form.style.opacity === visible) {
@@ -209,6 +208,16 @@ const displayController = (function(boardElement, gameBoardObject) {
     e.preventDefault();
     game.updateNames(_retrieveNames());
     _hideForm();
+    if (!game.isRunning()) {
+      _changeToGameStartDisplay();
+    }
+  
+    game.play();
+  }
+
+  function _changeToGameStartDisplay() {
+    boardElement.style.opacity = visible;
+    startBtn.textContent = 'Reset';
   }
 
   // Make the form visible on the screen
