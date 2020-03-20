@@ -288,6 +288,17 @@ const game = (function() {
   let currentPlayer = players[currentPlayerIndex];
   let gameIsRunning = false;
 
+  // Initialization
+  players.forEach((player, index) => {
+    const nameFromLocalStorage = localStorage.getItem(index);
+    
+    // Clearing the browser history sets the value of all
+    // localStorage items to the string 'undefined'
+    if (nameFromLocalStorage && nameFromLocalStorage !== 'undefined') {
+      player.setName(nameFromLocalStorage);
+    }
+  });
+
   function _calculateTotalMoves() {
     return players.reduce((acc, cur) => acc + cur.getMoves(), 0);
   }
@@ -320,7 +331,10 @@ const game = (function() {
   }
 
   function updateNames(names) {
-    names.forEach((name, index) => players[index].setName(name));
+    names.forEach((name, index) => {
+      const newName = players[index].setName(name);
+      localStorage.setItem(index, newName);
+    });
   }
 
   function placeSymbolForCurrentPlayer(row, col) {
