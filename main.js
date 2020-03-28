@@ -1,16 +1,55 @@
-// Board Module
+// Javascript implementation of Tic-tac-toe
+// The entry point for the game is at the event handler 
+// for the click of the start button
+
+// Player Factory
+function createPlayer(symbol, name) {
+  let moves = 0;
+
+  function getMoves() {
+    return moves;
+  }
+
+  function updateMoves() {
+    moves += 1;
+    return moves;
+  }
+
+  function resetMoves() {
+    moves = 0;
+  }
+
+  function getSymbol() {
+    return symbol;
+  }
+
+  function getName() {
+    return name || symbol;
+  }
+
+  function setName(newName) {
+    if (newName.trim() !== '') name = newName;
+    return name;
+  }
+
+  return {getMoves, updateMoves, resetMoves, getSymbol, getName, setName};
+}
+
+
+// Board Module - manages the internal state of the board
 const gameBoard = (function() {
-  const EMPTY = '#';
+  const EMPTY_SYMBOL = '#';
   const size = 3;
 
-  // Total number of symbols for each player in each section
+  // Stores the total number of symbols for each player in each section
+  // (i.e horizontal, vertical, and diagonal)
   let player1Total = 0;
   let player2Total = 0;
 
   let representation = [
-    [EMPTY, EMPTY, EMPTY],
-    [EMPTY, EMPTY, EMPTY],
-    [EMPTY, EMPTY, EMPTY]
+    [EMPTY_SYMBOL, EMPTY_SYMBOL, EMPTY_SYMBOL],
+    [EMPTY_SYMBOL, EMPTY_SYMBOL, EMPTY_SYMBOL],
+    [EMPTY_SYMBOL, EMPTY_SYMBOL, EMPTY_SYMBOL]
   ];
 
   function _checkBoundsValidity(row, col) {
@@ -96,7 +135,7 @@ const gameBoard = (function() {
   }
 
   function setValueAt(row, col, playerObject) {
-    if (getValueAt(row, col) === EMPTY) {
+    if (getValueAt(row, col) === EMPTY_SYMBOL) {
       representation[row][col] = playerObject.getSymbol();
       return true;
     }
@@ -114,175 +153,33 @@ const gameBoard = (function() {
     return _checkDiagonalSections();
   }
 
+  function getEmptySymbol() {
+    return EMPTY_SYMBOL;
+  }
+
   function clear() {
     representation.forEach((rowValue, rowIndex) => {
       rowValue.forEach((colValue, colIndex) => {
-        representation[rowIndex][colIndex] = EMPTY;
+        representation[rowIndex][colIndex] = EMPTY_SYMBOL;
       });
     });
   }
 
   return {
-    getRepresentation, getValueAt, setValueAt, getWinnerSymbol, clear, EMPTY
+    getRepresentation,
+    getValueAt,
+    setValueAt,
+    clear,
+    getWinnerSymbol,
+    getEmptySymbol
   };
 })();
 
 
-// Display Module
-const displayController = (function(boardElement, gameBoardObject) {
-  // Page elements
-  const containerElement = document.querySelector('.container');
-  const headingElement = document.querySelector('h1');
-  const formDisplayToggleBtn = document.querySelector('.name-form-display');
-  const form = document.querySelector('form');
-  const inputFields = [...form.children].filter((f) => f.nodeName === 'INPUT');
-  const startBtn = document.querySelector('.start-reset-btn');
-  const messageElement = document.querySelector('.message');
-
-  // Event listeners
-  formDisplayToggleBtn.addEventListener('click', _toggleFormDisplay);
-  startBtn.addEventListener('click', _handleStartBtnClick);
-  form.addEventListener('submit', _handleFormSubmission);
-
-  function _toggleFormDisplay() {
-    if (_checkIfFormIsHidden()) {
-      _showForm();
-    } else {
-      _hideForm();
-    }
-  }
-
-  function _checkIfFormIsHidden() {
-    return [...form.classList].includes('hidden');
-  }
-
-  function _handleStartBtnClick() {
-    _hideElement(messageElement);
-    if (startBtn.textContent === 'Reset') {
-      game.restart();
-    } else {
-      game.play();
-      _changeToGameStartDisplay();
-    }
-
-    if (!_checkIfFormIsHidden()) {
-      game.updateNames(_retrieveNames());
-      _hideForm();
-    }
-  }
-
-  function _handleFormSubmission(e) {
-    e.preventDefault();
-    game.updateNames(_retrieveNames());
-    _hideForm();
-    if (!game.isRunning()) _changeToGameStartDisplay();
-    game.play();
-  }
-
-  function _changeToGameStartDisplay() {
-    _showElement(boardElement);
-    _hideElement(headingElement);
-    startBtn.textContent = 'Reset';
-    _swapElementClass(startBtn, 'start', 'reset');
-  }
-
-  function _setDataAttribs(elem, obj) {
-    Object.keys(obj).forEach((key) => elem.dataset[key] = obj[key]);
-  }
-
-  function _showForm() {
-    formDisplayToggleBtn.textContent = 'Close'
-    _swapElementClass(formDisplayToggleBtn, 'update-names', 'close');
-    _showElement(form);
-  }
-
-  function _hideForm() {
-    // Clear input fields
-    inputFields.forEach((f) => f.value = '');
-    formDisplayToggleBtn.textContent = 'Update Player Names';
-    _swapElementClass(formDisplayToggleBtn, 'close', 'update-names');
-    _hideElement(form);
-  }
-
-  function _swapElementClass(elem, before, after) {
-    elem.classList.remove(before);
-    elem.classList.add(after);
-  }
-
-  function _showElement(elem, value) {
-    elem.classList.remove('hidden');
-    if (value) elem.style.display = value;
-  }
-
-  function _hideElement(elem) {
-    elem.classList.add('hidden');
-  }
-
-  function _retrieveNames() {
-    return inputFields.map((f) => f.value);
-  }
-
-  function _resetBoardElement() {
-    containerElement.removeChild(boardElement);
-    boardElement = document.createElement('div');
-    boardElement.id = 'board';
-    boardElement.classList.add('display-row');
-  }
-
-  function _getTileIndex(tileElement) {
-    return [tileElement.dataset.rowIndex, tileElement.dataset.colIndex];
-  }
-
-  function _handleTileElementClick(e) {
-    if (game.isRunning()) {
-      _hideElement(messageElement);
-      let [row, col] = _getTileIndex(e.target);
-      game.placeSymbolForCurrentPlayer(row, col);
-    }
-
-    renderBoard();
-  }
-
-  function renderBoard() {
-    // Recreate all DOM elements with updated values
-    _resetBoardElement();
-    gameBoardObject.getRepresentation().forEach((rowValue, rowIndex) => {
-      const rowElement = document.createElement('div');
-      rowElement.classList.add('row');
-      rowValue.forEach((colValue, colIndex) => {
-        const tileElement = document.createElement('span');
-        if (colValue === gameBoardObject.EMPTY) tileElement.style.color = 'transparent';
-        tileElement.classList.add('tile');
-        _setDataAttribs(tileElement, {rowIndex, colIndex, 'symbol': colValue});
-        tileElement.textContent = colValue;
-        tileElement.addEventListener('click', _handleTileElementClick);
-        rowElement.appendChild(tileElement);
-      });
-
-      boardElement.appendChild(rowElement);
-    });
-
-    containerElement.appendChild(boardElement);
-  }
-
-  function renderWinnerMessage(winnerName) {
-    messageElement.textContent = winnerName + ' wins';
-    _showElement(messageElement);
-  }
-
-  function renderDrawMessage() {
-    messageElement.textContent = 'It\'s a draw';
-    _showElement(messageElement);
-  }
-
-  return {renderBoard, renderWinnerMessage, renderDrawMessage};
-})(document.getElementById('board'), gameBoard);
-
-
-// Game State Module
-const game = (function() {
-  const movesForDraw = 9;
-  const movesForWin = 3;
+// Game State Module - manages the gameplay
+const gameState = (function() {
+  const MOVES_FOR_DRAW = 9;
+  const MOVES_FOR_WIN = 3;
   const players = [createPlayer('X'), createPlayer('O')];
   let currentPlayerIndex = 0;
   let currentPlayer = players[currentPlayerIndex];
@@ -291,7 +188,7 @@ const game = (function() {
   // Initialization
   players.forEach((player, index) => {
     const nameFromLocalStorage = localStorage.getItem(index);
-    
+
     // Clearing the browser history sets the value of all
     // localStorage items to the string 'undefined'
     if (nameFromLocalStorage && nameFromLocalStorage !== 'undefined') {
@@ -312,23 +209,6 @@ const game = (function() {
     currentPlayerIndex = 0;
     currentPlayer = players[currentPlayerIndex];
   }
-  
-  function _reset() {
-    gameIsRunning = true;
-    gameBoard.clear();
-    _resetCurrentPlayer();
-    players.forEach((player) => player.resetMoves());
-  }
-
-  function _declareWinner() {
-    displayController.renderWinnerMessage(currentPlayer.getName());
-    gameIsRunning = false;
-  }
-
-  function _declareDraw() {
-    displayController.renderDrawMessage();
-    gameIsRunning = false;
-  }
 
   function updateNames(names) {
     names.forEach((name, index) => {
@@ -338,20 +218,24 @@ const game = (function() {
   }
 
   function placeSymbolForCurrentPlayer(row, col) {
+    let update = {win: false, draw: false};
     if (gameIsRunning) {
       const placementIsValid = gameBoard.setValueAt(row, col, currentPlayer);
       if (placementIsValid) {
-        if (currentPlayer.updateMoves() >= movesForWin) {
+        if (currentPlayer.updateMoves() >= MOVES_FOR_WIN) {
           if (gameBoard.getWinnerSymbol() === currentPlayer.getSymbol()) {
-            _declareWinner();
-          } else if (_calculateTotalMoves() === movesForDraw) {
-            _declareDraw();
+            update.win = true;
+          } else if (_calculateTotalMoves() === MOVES_FOR_DRAW) {
+            update.draw = true;
           }
         }
 
-        _updateCurrentPlayer();
+        if (update.win || update.draw) gameIsRunning = false;
+        else                           _updateCurrentPlayer();
       }
     }
+
+    return update;
   }
 
   function isRunning() {
@@ -360,47 +244,194 @@ const game = (function() {
 
   function play() {
     if (!gameIsRunning) gameIsRunning = true;
-    displayController.renderBoard();
   }
 
-  function restart() {
-    _reset();
-    displayController.renderBoard();
+  function reset() {
+    gameIsRunning = true;
+    gameBoard.clear();
+    _resetCurrentPlayer();
+    players.forEach((player) => player.resetMoves());
   }
 
-  return {updateNames, placeSymbolForCurrentPlayer, play, restart, isRunning};
+  function getCurrentPlayerName() {
+    return currentPlayer.getName();
+  }
+
+  return {
+    play,
+    reset,
+    isRunning,
+    updateNames,
+    getCurrentPlayerName,
+    placeSymbolForCurrentPlayer,
+  };
 })();
 
 
-// Player Factory
-function createPlayer(symbol, name) {
-  let moves = 0;
+// Display Module - manages user interaction
+const displayController = (function(boardElement, gameBoardObj, gameStateObj) {
 
-  function getMoves() {
-    return moves;
+  // Page elements
+  const containerElement = document.querySelector('.container');
+  const headingElement = document.querySelector('h1');
+  const formDisplayToggleBtn = document.querySelector('.name-form-display');
+  const formElement = document.querySelector('form');
+  const formInputFields = [...formElement.children].filter((field) => {
+    return field.nodeName === 'INPUT';
+  });
+  const startBtn = document.querySelector('.start-reset-btn');
+  const messageElement = document.querySelector('.message');
+
+  // Event listeners
+  formDisplayToggleBtn.addEventListener('click', _toggleFormDisplay);
+  startBtn.addEventListener('click', _handleStartBtnClick);
+  formElement.addEventListener('submit', _handleFormSubmission);
+
+  // Event handlers
+  function _toggleFormDisplay() {
+    if (_checkIfFormIsHidden()) {
+      _showForm();
+    } else {
+      _hideForm();
+    }
   }
 
-  function updateMoves() {
-    moves += 1;
-    return moves;
+  function _handleStartBtnClick() {
+    _hideElement(messageElement);
+    if (startBtn.textContent === 'Reset') {
+      gameStateObj.reset();
+    } else {
+      gameStateObj.play();
+      _changeToGameStartDisplay();
+    }
+
+    if (!_checkIfFormIsHidden()) {
+      gameStateObj.updateNames(_retrieveNames());
+      _hideForm();
+    }
+
+    _renderBoard();
   }
 
-  function resetMoves() {
-    moves = 0;
+  function _handleFormSubmission(e) {
+    e.preventDefault();
+    gameStateObj.updateNames(_retrieveNames());
+    _hideForm();
+    if (!gameStateObj.isRunning()) _changeToGameStartDisplay();
+    gameStateObj.play();
   }
 
-  function getSymbol() {
-    return symbol;
+  function _handleTileElementClick(e) {
+    // Stores/used to check if the result of the game has been determined
+    // (i.e if there the game is a draw or if there is a winner)
+    let status = {win: false, draw: false};
+
+    if (gameStateObj.isRunning()) {
+      _hideElement(messageElement);
+      let [row, col] = _getTileIndex(e.target);
+      status = gameStateObj.placeSymbolForCurrentPlayer(row, col);
+    }
+
+    if (status.win) {
+      const winnerName = gameStateObj.getCurrentPlayerName();
+      _renderWinnerMessage(winnerName);
+    } else if (status.draw) {
+      _renderDrawMessage();
+    }
+
+    _renderBoard();
   }
 
-  function getName() {
-    return name || symbol;
+  // Helper functions
+  function _showElement(elem, value) {
+    elem.classList.remove('hidden');
+    if (value) elem.style.display = value;
   }
 
-  function setName(newName) {
-    if (newName.trim() !== '') name = newName;
-    return name;
+  function _hideElement(elem) {
+    elem.classList.add('hidden');
   }
 
-  return {getMoves, updateMoves, resetMoves, getSymbol, getName, setName};
-}
+  function _swapElementClass(elem, before, after) {
+    elem.classList.remove(before);
+    elem.classList.add(after);
+  }
+
+  function _setDataAttribs(elem, obj) {
+    Object.keys(obj).forEach((key) => elem.dataset[key] = obj[key]);
+  }
+
+  function _checkIfFormIsHidden() {
+    return [...formElement.classList].includes('hidden');
+  }
+
+  function _showForm() {
+    formDisplayToggleBtn.textContent = 'Close'
+    _swapElementClass(formDisplayToggleBtn, 'update-names', 'close');
+    _showElement(formElement);
+  }
+
+  function _hideForm() {
+    formInputFields.forEach((f) => f.value = '');
+    formDisplayToggleBtn.textContent = 'Update Player Names';
+    _swapElementClass(formDisplayToggleBtn, 'close', 'update-names');
+    _hideElement(formElement);
+  }
+
+  function _retrieveNames() {
+    return formInputFields.map((inputField) => inputField.value);
+  }
+
+  function _resetBoardElement() {
+    containerElement.removeChild(boardElement);
+    boardElement = document.createElement('div');
+    boardElement.id = 'board';
+    boardElement.classList.add('display-row');
+  }
+
+  function _getTileIndex(tileElement) {
+    return [tileElement.dataset.rowIndex, tileElement.dataset.colIndex];
+  }
+
+  function _changeToGameStartDisplay() {
+    _showElement(boardElement);
+    _hideElement(headingElement);
+    startBtn.textContent = 'Reset';
+    _swapElementClass(startBtn, 'start', 'reset');
+  }
+
+  function _renderBoard() {
+    // Recreate all DOM elements with updated values
+    _resetBoardElement();
+    gameBoardObj.getRepresentation().forEach((rowValue, rowIndex) => {
+      const rowElement = document.createElement('div');
+      rowElement.classList.add('row');
+      rowValue.forEach((colValue, colIndex) => {
+        const tileElement = document.createElement('span');
+        if (colValue === gameBoardObj.getEmptySymbol()) {
+          tileElement.style.color = 'transparent';
+        }
+
+        tileElement.classList.add('tile');
+        _setDataAttribs(tileElement, {rowIndex, colIndex, 'symbol': colValue});
+        tileElement.textContent = colValue;
+        tileElement.addEventListener('click', _handleTileElementClick);
+        rowElement.appendChild(tileElement);
+      });
+
+      boardElement.appendChild(rowElement);
+    });
+
+    containerElement.appendChild(boardElement);
+  }
+
+  function _renderWinnerMessage(winnerName) {
+    messageElement.textContent = winnerName + ' wins';
+    _showElement(messageElement);
+  }
+
+  function _renderDrawMessage() {
+    messageElement.textContent = 'It\'s a draw';
+    _showElement(messageElement);
+  }
+})(document.getElementById('board'), gameBoard, gameState);
