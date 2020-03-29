@@ -57,11 +57,18 @@ body {
   background-color: #0f0515;
 }
 
-h1 {
+h1, h2 {
   text-align: center;
-  font-size: 3em;
   margin: 0;
   color: #fff;
+}
+
+h1 {
+  font-size: 3em;
+}
+
+h2 {
+  font-size: 2em;
 }
 
 button, input {
@@ -91,28 +98,28 @@ button:hover, .tile:hover {
 button:active {
   box-shadow: 1px 1px 2px #000 inset, -1px -1px 2px #000 inset;
 }
-button.name-form-display {
+.name-form-display {
 }
-button.start-reset-btn {
+.start-reset-btn {
   display: block;
   margin: 0 auto;
 }
-button.start {
+.start {
   background-color: #2d9d49;
 }
-button.start:hover {
+.start:hover {
   background-color: #39bd5a;
 }
-button.reset, button.close {
+.reset, .close {
   background-color: #bb3b34
 }
-button.reset:hover, button.close:hover {
+.reset:hover, .close:hover {
   background-color: #dd4941;
 }
-button.update-names {
+.update-names {
   background-color: #bba634;
 }
-button.update-names:hover {
+.update-names:hover {
   background-color: #d5bd3b;
 }
 [type="submit"] {
@@ -169,7 +176,7 @@ form {
 }
 
 /* Board */
-#board {
+.board {
   flex-flow: column nowrap;
   border: 1px solid #000;
 }

@@ -1,6 +1,6 @@
 // Javascript implementation of Tic-tac-toe
-// The entry point for the game is at the event handler 
-// for the click of the start button
+// The entry point for the game is the splash screen function
+// of the gameDisplay module
 
 // Player Factory
 function createPlayer(symbol, name) {
@@ -184,6 +184,7 @@ const gameState = (function() {
   let currentPlayerIndex = 0;
   let currentPlayer = players[currentPlayerIndex];
   let gameIsRunning = false;
+  let opponent;
 
   // Initialization
   players.forEach((player, index) => {
@@ -208,6 +209,10 @@ const gameState = (function() {
   function _resetCurrentPlayer() {
     currentPlayerIndex = 0;
     currentPlayer = players[currentPlayerIndex];
+  }
+
+  function setOpponent(opponentType) {
+    console.log(opponentType);
   }
 
   function updateNames(names) {
@@ -264,35 +269,40 @@ const gameState = (function() {
     updateNames,
     getCurrentPlayerName,
     placeSymbolForCurrentPlayer,
+    setOpponent,
   };
 })();
 
 
 // Display Module - manages user interaction
-const displayController = (function(boardElement, gameBoardObj, gameStateObj) {
+const displayController = (function(gameBoardObj, gameStateObj) {
   // Initialization
   const containerElement = document.querySelector('.container');
   _renderSplashScreen();
 
   // Event handlers
   function _toggleFormDisplay() {
-    if (_checkIfFormIsHidden()) {
+    const formElement = document.querySelector('form');
+    if (_checkIfElementIsHidden(formElement)) {
       _showForm();
     } else {
       _hideForm();
     }
   }
 
-  function _handleStartBtnClick() {
+  function _handleStartResetBtnClick(e) {
+    const startResetBtn = e.target;
+    const messageElement = document.querySelector('.message');
+    const formElement = document.querySelector('form');
     _hideElement(messageElement);
-    if (startBtn.textContent === 'Reset') {
+    if (startResetBtn.textContent === 'Reset') {
       gameStateObj.reset();
     } else {
       gameStateObj.play();
       _changeToGameStartDisplay();
     }
 
-    if (!_checkIfFormIsHidden()) {
+    if (!_checkIfElementIsHidden(formElement)) {
       gameStateObj.updateNames(_retrieveNames());
       _hideForm();
     }
@@ -309,6 +319,7 @@ const displayController = (function(boardElement, gameBoardObj, gameStateObj) {
   }
 
   function _handleTileElementClick(e) {
+    const messageElement = document.querySelector('.message');
     // Stores/used to check if the result of the game has been determined
     // (i.e if there the game is a draw or if there is a winner)
     let status = {win: false, draw: false};
@@ -333,6 +344,7 @@ const displayController = (function(boardElement, gameBoardObj, gameStateObj) {
     const selectedOpponent = e.target.dataset.opponent;
     const splashScreen = document.querySelector('.splash-screen');
     containerElement.removeChild(splashScreen);
+    _renderGameScreen(selectedOpponent);
   }
 
   // Helper functions
@@ -354,21 +366,34 @@ const displayController = (function(boardElement, gameBoardObj, gameStateObj) {
     Object.keys(obj).forEach((key) => elem.dataset[key] = obj[key]);
   }
 
-  function _appendChildren(parent, ...children) {
-    children.forEach((child) => parent.appendChild(child))
+  function _setElementAttribs(elem, obj) {
+    Object.keys(obj).forEach((key) => elem.setAttribute(key, obj[key]));
   }
 
-  function _checkIfFormIsHidden() {
-    return [...formElement.classList].includes('hidden');
+  function _appendChildren(parent, ...children) {
+    children.forEach((child) => parent.appendChild(child));
+  }
+
+  function _checkIfElementIsHidden(elem) {
+    if (elem) return [...elem.classList].includes('hidden');
+    return true;
   }
 
   function _showForm() {
+    const formElement = document.querySelector('form');
+    const formDisplayToggleBtn = document.querySelector('.name-form-display');
     formDisplayToggleBtn.textContent = 'Close'
     _swapElementClass(formDisplayToggleBtn, 'update-names', 'close');
     _showElement(formElement);
+    formElement.firstElementChild.focus();
   }
 
   function _hideForm() {
+    const formElement = document.querySelector('form');
+    const formInputFields = [...formElement.children].filter((child) => {
+      return child.nodeName === 'INPUT'
+    });
+    const formDisplayToggleBtn = document.querySelector('.name-form-display');
     formInputFields.forEach((f) => f.value = '');
     formDisplayToggleBtn.textContent = 'Update Player Names';
     _swapElementClass(formDisplayToggleBtn, 'close', 'update-names');
@@ -376,14 +401,25 @@ const displayController = (function(boardElement, gameBoardObj, gameStateObj) {
   }
 
   function _retrieveNames() {
+    const formElement = document.querySelector('form');
+    const formInputFields = [...formElement.children].filter((child) => {
+      return child.nodeName === 'INPUT';
+    });
     return formInputFields.map((inputField) => inputField.value);
   }
 
-  function _resetBoardElement() {
-    containerElement.removeChild(boardElement);
+  function _addToContainer(...elems) {
+    let displayRow = document.createElement('div');
+    displayRow.classList = 'display-row';
+    _appendChildren(displayRow, ...elems);
+    _appendChildren(containerElement, displayRow);
+  }
+
+  function _resetBoardElement(boardElement) {
+    if (boardElement) containerElement.removeChild(boardElement);
     boardElement = document.createElement('div');
-    boardElement.id = 'board';
-    boardElement.classList.add('display-row');
+    boardElement.classList = 'display-row board';
+    return boardElement;
   }
 
   function _getTileIndex(tileElement) {
@@ -391,10 +427,68 @@ const displayController = (function(boardElement, gameBoardObj, gameStateObj) {
   }
 
   function _changeToGameStartDisplay() {
-    _showElement(boardElement);
-    _hideElement(headingElement);
-    startBtn.textContent = 'Reset';
-    _swapElementClass(startBtn, 'start', 'reset');
+    const startResetBtn = document.querySelector('.start-reset-btn');
+    startResetBtn.textContent = 'Reset';
+    _swapElementClass(startResetBtn, 'start', 'reset');
+    if (_checkIfElementIsHidden(startResetBtn)) _showElement(startResetBtn);
+    _renderBoard();
+  }
+
+  function _renderPlayerNamesForm() {
+    // Form display toggle button
+    const formCloseBtn = document.createElement('button');
+    formCloseBtn.classList = 'name-form-display close';
+    formCloseBtn.textContent = 'Close';
+    formCloseBtn.addEventListener('click', _toggleFormDisplay);
+    _addToContainer(formCloseBtn);
+    // Form fields
+    const player1InputElement = document.createElement('input');
+    _setElementAttribs(
+      player1InputElement,
+      {type: 'text', name: 'player1', placeholder: 'Enter Player 1 Name'}
+    );
+    const player2InputElement = document.createElement('input');
+    _setElementAttribs(
+      player2InputElement,
+      {type: 'text', name: 'player2', placeholder: 'Enter Player 2 Name'}
+    );
+    // Submit button
+    const submitBtn = document.createElement('button');
+    _setElementAttribs(submitBtn, {type: 'submit'});
+    submitBtn.textContent = 'Submit';
+    // Form
+    const formElement = document.createElement('form');
+    formElement.addEventListener('submit', _handleFormSubmission);
+    _appendChildren(
+      formElement, player1InputElement, player2InputElement, submitBtn
+    );
+    _addToContainer(formElement);
+    player1InputElement.focus();
+  }
+
+  function _renderGameScreen(opponent) {
+    gameStateObj.setOpponent(opponent);
+
+    if (opponent === 'human') _renderPlayerNamesForm();
+
+    const startResetBtn = document.createElement('button');
+    startResetBtn.textContent = 'Start';
+    startResetBtn.classList = 'hidden start-reset-btn start';
+    startResetBtn.addEventListener('click', _handleStartResetBtnClick);
+    _addToContainer(startResetBtn);
+
+    const messageElement = document.createElement('p');
+    messageElement.textContent = 'No winner yet';
+    messageElement.classList = 'message';
+    _addToContainer(messageElement);
+    _hideElement(messageElement);
+
+    if (opponent === 'computer') {
+      startResetBtn.textContent = 'Reset';
+      _swapElementClass(startResetBtn, 'start', 'reset');
+      _showElement(startResetBtn);
+      _renderBoard();
+    }
   }
 
   function _renderSplashScreen() {
@@ -412,8 +506,8 @@ const displayController = (function(boardElement, gameBoardObj, gameStateObj) {
     btnGroup.classList.add('btn-group');
 
     // Create heading
-    const headingElement = document.createElement('h1');
-    headingElement.textContent = 'Choose opponent';
+    const headingElement = document.createElement('h2');
+    headingElement.textContent = 'Choose your opponent';
 
     // Create container element and add components
     const splashScreenElement = document.createElement('div');
@@ -425,7 +519,9 @@ const displayController = (function(boardElement, gameBoardObj, gameStateObj) {
 
   function _renderBoard() {
     // Recreate all DOM elements with updated values
-    _resetBoardElement();
+    let boardElement = document.querySelector('.board');
+    boardElement = _resetBoardElement(boardElement);
+
     gameBoardObj.getRepresentation().forEach((rowValue, rowIndex) => {
       const rowElement = document.createElement('div');
       rowElement.classList.add('row');
@@ -449,11 +545,13 @@ const displayController = (function(boardElement, gameBoardObj, gameStateObj) {
   }
 
   function _renderWinnerMessage(winnerName) {
+    const messageElement = document.querySelector('.message');
     messageElement.textContent = winnerName + ' wins';
     _showElement(messageElement);
   }
 
   function _renderDrawMessage() {
+    const messageElement = document.querySelector('.message');
     messageElement.textContent = 'It\'s a draw';
     _showElement(messageElement);
   }
