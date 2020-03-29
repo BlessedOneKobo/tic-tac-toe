@@ -270,22 +270,9 @@ const gameState = (function() {
 
 // Display Module - manages user interaction
 const displayController = (function(boardElement, gameBoardObj, gameStateObj) {
-
-  // Page elements
+  // Initialization
   const containerElement = document.querySelector('.container');
-  const headingElement = document.querySelector('h1');
-  const formDisplayToggleBtn = document.querySelector('.name-form-display');
-  const formElement = document.querySelector('form');
-  const formInputFields = [...formElement.children].filter((field) => {
-    return field.nodeName === 'INPUT';
-  });
-  const startBtn = document.querySelector('.start-reset-btn');
-  const messageElement = document.querySelector('.message');
-
-  // Event listeners
-  formDisplayToggleBtn.addEventListener('click', _toggleFormDisplay);
-  startBtn.addEventListener('click', _handleStartBtnClick);
-  formElement.addEventListener('submit', _handleFormSubmission);
+  _renderSplashScreen();
 
   // Event handlers
   function _toggleFormDisplay() {
@@ -342,6 +329,12 @@ const displayController = (function(boardElement, gameBoardObj, gameStateObj) {
     _renderBoard();
   }
 
+  function _handleOpponentSelection(e) {
+    const selectedOpponent = e.target.dataset.opponent;
+    const splashScreen = document.querySelector('.splash-screen');
+    containerElement.removeChild(splashScreen);
+  }
+
   // Helper functions
   function _showElement(elem, value) {
     elem.classList.remove('hidden');
@@ -359,6 +352,10 @@ const displayController = (function(boardElement, gameBoardObj, gameStateObj) {
 
   function _setDataAttribs(elem, obj) {
     Object.keys(obj).forEach((key) => elem.dataset[key] = obj[key]);
+  }
+
+  function _appendChildren(parent, ...children) {
+    children.forEach((child) => parent.appendChild(child))
   }
 
   function _checkIfFormIsHidden() {
@@ -400,6 +397,32 @@ const displayController = (function(boardElement, gameBoardObj, gameStateObj) {
     _swapElementClass(startBtn, 'start', 'reset');
   }
 
+  function _renderSplashScreen() {
+    // Create buttons
+    const humanBtn = document.createElement('button');
+    _setDataAttribs(humanBtn, {opponent: 'human'});
+    humanBtn.addEventListener('click', _handleOpponentSelection);
+    humanBtn.textContent = 'Human';
+    const computerBtn = document.createElement('button');
+    _setDataAttribs(computerBtn, {opponent: 'computer'});
+    computerBtn.addEventListener('click', _handleOpponentSelection);
+    computerBtn.textContent = 'Computer';
+    const btnGroup = document.createElement('div');
+    _appendChildren(btnGroup, humanBtn, computerBtn);
+    btnGroup.classList.add('btn-group');
+
+    // Create heading
+    const headingElement = document.createElement('h1');
+    headingElement.textContent = 'Choose opponent';
+
+    // Create container element and add components
+    const splashScreenElement = document.createElement('div');
+    splashScreenElement.classList = 'display-row splash-screen';
+    _appendChildren(splashScreenElement, headingElement, btnGroup);
+
+    containerElement.appendChild(splashScreenElement);
+  }
+
   function _renderBoard() {
     // Recreate all DOM elements with updated values
     _resetBoardElement();
@@ -434,4 +457,4 @@ const displayController = (function(boardElement, gameBoardObj, gameStateObj) {
     messageElement.textContent = 'It\'s a draw';
     _showElement(messageElement);
   }
-})(document.getElementById('board'), gameBoard, gameState);
+})(gameBoard, gameState);
