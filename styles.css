@@ -167,11 +167,10 @@ form {
 
 /* Message */
 .message {
-  font-size: 2em;
+  font-size: 1.8em;
   font-weight: bold;
   text-align: center;
   margin: 0;
-  line-height: 1.5;
   color: #fff;
 }
 
@@ -186,8 +185,8 @@ form {
 }
 .tile {
   flex: 0 0 33.33%;
-  padding-top: .35em;
-  padding-bottom: .35em;
+  padding-top: .25em;
+  padding-bottom: .25em;
   background-color: #ddd;
   text-align: center;
   font-size: 5em;
@@ -215,7 +214,7 @@ form {
 
 @media (max-width: 550px) {
   button, input {
-    font-size: .95em;
+    font-size: .85em;
   }
   .container {
     width: 86.66%;
@@ -223,7 +222,13 @@ form {
   .tile {
     font-size: 3.33em;
   }
-  h1, .message {
+  h1 {
     font-size: 1.85em;
+  }
+  h2 {
+    font-size: 1.25em;
+  }
+  .message {
+    font-size: 1.5em;
   }
 }
