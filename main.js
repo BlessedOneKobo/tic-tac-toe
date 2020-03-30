@@ -5,6 +5,7 @@
 // Player Factory
 function createPlayer(symbol, name) {
   let moves = 0;
+  let type = 'human';
 
   function getMoves() {
     return moves;
@@ -32,7 +33,24 @@ function createPlayer(symbol, name) {
     return name;
   }
 
-  return {getMoves, updateMoves, resetMoves, getSymbol, getName, setName};
+  function getType() {
+    return type;
+  }
+
+  function setType(newType) {
+    if (newType === 'human' || newType === 'computer') type = newType;
+  }
+
+  return {
+    getMoves,
+    updateMoves,
+    resetMoves,
+    getSymbol,
+    getName,
+    setName,
+    getType,
+    setType,
+  };
 }
 
 
@@ -184,7 +202,6 @@ const gameState = (function() {
   let currentPlayerIndex = 0;
   let currentPlayer = players[currentPlayerIndex];
   let gameIsRunning = false;
-  let opponent;
 
   // Initialization
   players.forEach((player, index) => {
@@ -211,8 +228,44 @@ const gameState = (function() {
     currentPlayer = players[currentPlayerIndex];
   }
 
+  function _calculateRandomNumber(x, y) {
+    return Math.floor(Math.random() * y) + x;
+  }
+
+  function _calculateRandomBoardPosition() {
+    const randomRow = _calculateRandomNumber(0, MOVES_FOR_WIN);
+    const randomCol = _calculateRandomNumber(0, MOVES_FOR_WIN);
+    return {row: randomRow, col: randomCol};
+  }
+
+  function _updateGameStatus(status) {
+    if (currentPlayer.updateMoves() >= MOVES_FOR_WIN) {
+      if (gameBoard.getWinnerSymbol() === currentPlayer.getSymbol()) {
+        status = {win: true, draw: false};
+      } else if (_calculateTotalMoves() === MOVES_FOR_DRAW) {
+        status = {win: false, draw: true};
+      }
+    }
+
+    return status;
+  }
+
+  function _placeSymbolForComputer() {
+    let status = {win: false, draw: false};
+    while (true) {
+      let {row, col} = _calculateRandomBoardPosition();
+      const placementIsValid = gameBoard.setValueAt(row, col, currentPlayer);
+      if (placementIsValid) {
+        status = _updateGameStatus(status);
+        break;
+      }
+    }
+
+    return status;
+  }
+
   function setOpponent(opponentType) {
-    console.log(opponentType);
+    players[1].setType(opponentType);
   }
 
   function updateNames(names) {
@@ -223,24 +276,25 @@ const gameState = (function() {
   }
 
   function placeSymbolForCurrentPlayer(row, col) {
-    let update = {win: false, draw: false};
+    let status = {win: false, draw: false};
     if (gameIsRunning) {
       const placementIsValid = gameBoard.setValueAt(row, col, currentPlayer);
       if (placementIsValid) {
-        if (currentPlayer.updateMoves() >= MOVES_FOR_WIN) {
-          if (gameBoard.getWinnerSymbol() === currentPlayer.getSymbol()) {
-            update.win = true;
-          } else if (_calculateTotalMoves() === MOVES_FOR_DRAW) {
-            update.draw = true;
+        status = _updateGameStatus(status);
+        if (status.win || status.draw) {
+          gameIsRunning = false;
+        } else {
+          _updateCurrentPlayer();
+          if (currentPlayer.getType() === 'computer') {
+            status = _placeSymbolForComputer();
+            if (status.win || status.draw) gameIsRunning = false;
+            else                           _updateCurrentPlayer();
           }
         }
-
-        if (update.win || update.draw) gameIsRunning = false;
-        else                           _updateCurrentPlayer();
       }
     }
 
-    return update;
+    return status;
   }
 
   function isRunning() {
@@ -344,6 +398,7 @@ const displayController = (function(gameBoardObj, gameStateObj) {
     const selectedOpponent = e.target.dataset.opponent;
     const splashScreen = document.querySelector('.splash-screen');
     containerElement.removeChild(splashScreen);
+    gameStateObj.setOpponent(selectedOpponent);
     _renderGameScreen(selectedOpponent);
   }
 
@@ -467,8 +522,6 @@ const displayController = (function(gameBoardObj, gameStateObj) {
   }
 
   function _renderGameScreen(opponent) {
-    gameStateObj.setOpponent(opponent);
-
     if (opponent === 'human') _renderPlayerNamesForm();
 
     const startResetBtn = document.createElement('button');
@@ -487,6 +540,7 @@ const displayController = (function(gameBoardObj, gameStateObj) {
       startResetBtn.textContent = 'Reset';
       _swapElementClass(startResetBtn, 'start', 'reset');
       _showElement(startResetBtn);
+      gameStateObj.play();
       _renderBoard();
     }
   }
